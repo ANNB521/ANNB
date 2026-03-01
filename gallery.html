@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ANNB521 - 照片库</title>
+  <style>
+    body { background: #121212; color: white; padding: 20px; font-family: sans-serif; }
+    h2 { text-align: center; color: #ff6000; margin-bottom: 20px; }
+    .image-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .image-grid img { width: 100%; border-radius: 8px; }
+    .empty { text-align: center; color: #999; margin-top: 50px; }
+  </style>
+</head>
+<body>
+  <h2>ANNB521 照片库</h2>
+  <div class="image-grid" id="images"></div>
+  <div class="empty" id="empty" style="display: none;">暂无照片</div>
+
+  <script>
+    function loadImages() {
+      const grid = document.getElementById('images');
+      const empty = document.getElementById('empty');
+      const images = JSON.parse(localStorage.getItem('pdd_images') || '[]');
+
+      if (images.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      images.forEach(img => {
+        const imgEl = document.createElement('img');
+        imgEl.src = img.data;
+        imgEl.alt = img.name;
+        grid.appendChild(imgEl);
+      });
+    }
+    loadImages();
+  </script>
+</body>
+</html>
