@@ -48,35 +48,40 @@ h2{
 <script>
 const gallery = document.getElementById('gallery');
 const API_KEY = '8a95d94678c08ed18a487c4ac68b9c96';
-const ALBUM_ID = '5bCvVg';
 
 async function loadPhotos() {
   gallery.innerHTML = '';
   try {
-    const r = await fetch(`https://api.imgbb.com/1/album?key=${API_KEY}&id=${ALBUM_ID}`);
+    // 先获取所有图片，而不是特定相册
+    const r = await fetch(`https://api.imgbb.com/1/images?key=${API_KEY}`);
     const d = await r.json();
-    if (!d.data?.images) return;
-    d.data.images.forEach(img => {
+    if (!d.data || d.data.length === 0) {
+      gallery.innerHTML = '<p style="text-align:center">暂无照片</p>';
+      return;
+    }
+    d.data.forEach(img => {
       const item = document.createElement('div');
       item.className = 'item';
       const image = document.createElement('img');
-      image.src = img.image.url;
+      image.src = img.url;
       const del = document.createElement('button');
       del.className = 'del';
       del.textContent = '✕';
-      del.onclick = () => deleteImg(img.url, item);
+      del.onclick = () => deleteImg(img.delete_url, item);
       item.appendChild(image);
       item.appendChild(del);
       gallery.appendChild(item);
     });
-  } catch (e) {}
+  } catch (e) {
+    gallery.innerHTML = '<p style="text-align:center">加载失败</p>';
+  }
 }
 
-async function deleteImg(url, el) {
+async function deleteImg(deleteUrl, el) {
   if (!confirm('确定删除？')) return;
   el.style.opacity = 0.5;
   try {
-    await fetch(`https://api.imgbb.com/1/delete?key=${API_KEY}&url=${encodeURIComponent(url)}`);
+    await fetch(deleteUrl);
     el.remove();
   } catch (e) {
     alert('删除失败');
